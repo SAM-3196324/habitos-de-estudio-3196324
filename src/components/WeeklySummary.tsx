@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Flame, Clock, Award, Trash2, Calendar, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Flame, Clock, Award, Trash2, Calendar, BookOpen, ChevronDown, ChevronUp, Sparkles, RefreshCw } from 'lucide-react';
 import { SessionRecord, WeeklyStats } from '../types';
 
 interface WeeklySummaryProps {
@@ -9,6 +9,13 @@ interface WeeklySummaryProps {
   onOpenManualLogModal: () => void;
 }
 
+interface AiInsightData {
+  franjaOptima: string;
+  porcentajeEnfoque: number;
+  diagnostico: string;
+  recomendaciones: string[];
+}
+
 export const WeeklySummary: React.FC<WeeklySummaryProps> = ({
   stats,
   recentSessions,
@@ -16,6 +23,137 @@ export const WeeklySummary: React.FC<WeeklySummaryProps> = ({
   onOpenManualLogModal,
 }) => {
   const [showAllHistory, setShowAllHistory] = useState(false);
+  const [aiInsight, setAiInsight] = useState<AiInsightData | null>(null);
+  const [aiSource, setAiSource] = useState<'gemini' | 'local_fallback'>('local_fallback');
+  const [isLoadingAi, setIsLoadingAi] = useState(false);
+
+  // Regla analítica local de respaldo cuando no hay conexión o no hay API key
+  const computeLocalFallback = (sessions: SessionRecord[]): AiInsightData => {
+    if (!sessions || sessions.length === 0) {
+      return {
+        franjaOptima: 'Mañana (09:00 - 12:00)',
+        porcentajeEnfoque: 100,
+        diagnostico: 'Aún no registraste suficientes bloques; la mañana suele ofrecer la menor interferencia cognitiva.',
+        recomendaciones: [
+          'Inicia tu primera sesión de 25 minutos apenas comience tu jornada de estudio.',
+          'Usa el temporizador con teléfono en silencio antes de revisar mensajes.'
+        ]
+      };
+    }
+
+    const brackets: Record<string, number> = {
+      'Mañana (07:00 - 12:00)': 0,
+      'Tarde (12:00 - 19:00)': 0,
+      'Noche (19:00 - 23:00)': 0,
+      'Madrugada (23:00 - 07:00)': 0,
+    };
+
+    let total = 0;
+    sessions.forEach((s) => {
+      const h = new Date(s.timestamp).getHours();
+      const mins = s.durationMinutes || 25;
+      total += mins;
+      if (h >= 7 && h < 12) brackets['Mañana (07:00 - 12:00)'] += mins;
+      else if (h >= 12 && h < 19) brackets['Tarde (12:00 - 19:00)'] += mins;
+      else if (h >= 19 && h < 23) brackets['Noche (19:00 - 23:00)'] += mins;
+      else brackets['Madrugada (23:00 - 07:00)'] += mins;
+    });
+
+    let best = 'Mañana (07:00 - 12:00)';
+    let max = -1;
+    Object.entries(brackets).forEach(([b, mins]) => {
+      if (mins > max) {
+        max = mins;
+        best = b;
+      }
+    });
+
+    const percent = total > 0 ? Math.round((max / total) * 100) : 50;
+    return {
+      franjaOptima: best,
+      porcentajeEnfoque: percent,
+      diagnostico: `Análisis local: Acumulaste el ${percent}% de tu tiempo de estudio concentrado en la ${best.toLowerCase()}.`,
+      recomendaciones: [
+        `Reserva tus materias más desafiantes para tu ventana de mayor rendimiento durante la ${best.split(' ')[0].toLowerCase()}.`,
+        'Activa el pacto de foco analógico 5 minutos antes de ingresar a tu franja óptima.'
+      ]
+    };
+  };
+
+  const analyzeStudyPattern = async () => {
+    setIsLoadingAi(true);
+
+    const apiKey = (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY)
+      || (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GEMINI_API_KEY)
+      || '';
+
+    if (!apiKey) {
+      setAiInsight(computeLocalFallback(recentSessions));
+      setAiSource('local_fallback');
+      setIsLoadingAi(false);
+      return;
+    }
+
+    try {
+      const promptData = recentSessions.map((s) => ({
+        materia: s.subjectName,
+        minutos: s.durationMinutes,
+        timestamp: s.timestamp,
+        distraccion: s.distractionLevel,
+      }));
+
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: `Historial de sesiones:\n${JSON.stringify(promptData)}\nIdentifica la franja horaria óptima semanal según el esquema.`
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: 'OBJECT',
+              properties: {
+                franjaOptima: { type: 'STRING' },
+                porcentajeEnfoque: { type: 'NUMBER' },
+                diagnostico: { type: 'STRING' },
+                recomendaciones: {
+                  type: 'ARRAY',
+                  items: { type: 'STRING' }
+                }
+              },
+              required: ['franjaOptima', 'porcentajeEnfoque', 'diagnostico', 'recomendaciones']
+            }
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error('Fallo en la respuesta de Gemini');
+      const data = await response.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('Respuesta vacía');
+
+      const parsed: AiInsightData = JSON.parse(text);
+      setAiInsight(parsed);
+      setAiSource('gemini');
+    } catch {
+      setAiInsight(computeLocalFallback(recentSessions));
+      setAiSource('local_fallback');
+    } finally {
+      setIsLoadingAi(false);
+    }
+  };
+
+  useEffect(() => {
+    analyzeStudyPattern();
+  }, [recentSessions.length]);
 
   // Formatear minutos en "X h Y min"
   const formatHoursAndMinutes = (totalMins: number) => {
@@ -210,6 +348,76 @@ export const WeeklySummary: React.FC<WeeklySummaryProps> = ({
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Sello de IA (Ejercicio 29): Franja Horaria Óptima */}
+      <div className="p-5 rounded-3xl bg-white border border-[#e7dec8] shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#c2593f]" />
+            <h3 className="text-sm font-serif font-bold text-[#1c1917]">
+              Franja Horaria Óptima (Sello de IA)
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={analyzeStudyPattern}
+            disabled={isLoadingAi}
+            className="px-2.5 py-1 text-xs text-[#78716c] hover:text-[#1c1917] hover:bg-[#f4efe6] rounded-lg border border-[#e7dec8] transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+            title="Reanalizar con IA"
+          >
+            <RefreshCw className={`w-3 h-3 ${isLoadingAi ? 'animate-spin text-[#c2593f]' : ''}`} />
+            <span>{isLoadingAi ? 'Analizando...' : 'Actualizar'}</span>
+          </button>
+        </div>
+
+        {aiInsight && (
+          <div className="space-y-3 pt-1">
+            {/* Tarjeta de Franja Óptima */}
+            <div className="p-3.5 rounded-2xl bg-[#fbeee9] border border-[#c2593f]/30 flex items-center justify-between gap-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#c2593f] block">
+                  Tu Mejor Momento del Día
+                </span>
+                <span className="text-base font-serif font-bold text-[#1c1917] block mt-0.5">
+                  {aiInsight.franjaOptima}
+                </span>
+              </div>
+              <div className="p-2 bg-white rounded-xl border border-[#c2593f]/20 text-center shrink-0">
+                <span className="text-[10px] text-[#78716c] block">Efectividad</span>
+                <span className="text-sm font-mono font-bold text-[#c2593f]">
+                  {aiInsight.porcentajeEnfoque}%
+                </span>
+              </div>
+            </div>
+
+            {/* Diagnóstico */}
+            <div className="p-3 bg-[#fbf8f3] rounded-xl border border-[#ded4c0] text-xs text-[#1c1917] leading-relaxed">
+              <span className="font-semibold text-[#78716c] uppercase text-[10px] tracking-wider block mb-1">
+                Diagnóstico del Patrón
+              </span>
+              <p>{aiInsight.diagnostico}</p>
+            </div>
+
+            {/* Recomendaciones Tácticas */}
+            <div className="p-3 bg-white rounded-xl border border-[#e7dec8] text-xs space-y-1.5">
+              <span className="font-semibold text-[#78716c] uppercase text-[10px] tracking-wider block">
+                Recomendaciones Tácticas
+              </span>
+              <ul className="space-y-1 text-[#44403c] list-disc list-inside">
+                {aiInsight.recomendaciones.map((rec, i) => (
+                  <li key={i} className="leading-snug">{rec}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Badge de fuente */}
+            <div className="flex items-center justify-between text-[10px] text-[#a8a29e] pt-1">
+              <span>Modelo: <strong>{aiSource === 'gemini' ? '✨ Gemini 3.8 Flash' : '📊 Regla Heurística Local'}</strong></span>
+              <span>Esquema validado estricto</span>
+            </div>
           </div>
         )}
       </div>

@@ -125,6 +125,22 @@
           </div>
         </div>
 
+        <!-- Sello de IA (Ejercicio 29): Patrón Semanal y Franja Horaria Óptima -->
+        <div class="ai-insight-card" id="aiInsightCard" style="background:#ffffff; border:1.5px solid var(--border-parchment); border-radius:14px; padding:1.1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:1.25rem;">✨</span>
+              <h3 class="subsection-title" style="margin-bottom:0;">Franja Horaria Óptima (IA)</h3>
+            </div>
+            <button id="btnRefreshAiInsight" type="button" class="btn-secondary" style="height:38px; min-height:38px; width:auto; padding:0 12px; font-size:0.8rem; border-radius:10px; cursor:pointer;" title="Consultar análisis de Gemini">
+              🔄 Analizar Patrón
+            </button>
+          </div>
+          <div id="aiInsightContent">
+            <!-- Cargando o renderizado de tarjetas -->
+          </div>
+        </div>
+
         <!-- Historial de sesiones recientes -->
         <div class="history-card">
           <h3 class="subsection-title">Bitácora de Sesiones</h3>

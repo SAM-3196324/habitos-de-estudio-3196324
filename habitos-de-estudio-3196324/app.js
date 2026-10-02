@@ -623,6 +623,263 @@ if (btnClearAll) {
   });
 }
 
+// ==========================================================
+// 8. INTEGRACIÓN DE GEMINI AI - SELLO DE IA (EJERCICIO 29)
+// "La IA lee el patrón de la semana e identifica la franja horaria en que la persona rinde mejor."
+// ==========================================================
+
+// Esquema JSON estricto requerido (responseSchema)
+const GEMINI_RESPONSE_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    franjaOptima: { type: "STRING", description: "Ej: Noche (19:00 - 22:00)" },
+    porcentajeEnfoque: { type: "NUMBER", description: "Porcentaje estimado de rendimiento en esa franja" },
+    diagnostico: { type: "STRING", description: "Breve explicación en una frase sobre el patrón detectado" },
+    recomendaciones: {
+      type: "ARRAY",
+      items: { type: "STRING" },
+      description: "Dos consejos tácticos concretos para aprovechar esa franja"
+    }
+  },
+  required: ["franjaOptima", "porcentajeEnfoque", "diagnostico", "recomendaciones"]
+};
+
+// Ejemplo de JSON de prueba para desarrollo y pruebas sin consumir cuota
+const MOCK_TEST_INSIGHT = {
+  franjaOptima: "Tarde (16:00 - 19:00)",
+  porcentajeEnfoque: 72,
+  diagnostico: "Concentraste el 72% de tus minutos de estudio efectivo durante las tardes con un nivel mínimo de distracciones.",
+  recomendaciones: [
+    "Reserva el bloque de 16:30 a 18:00 para la materia más desafiante (como Programación o Matemáticas).",
+    "Deja el teléfono en otra habitación antes de las 16:00 para proteger tu pico de energía."
+  ]
+};
+
+// Fallback local: Regla de decisión heurística cuando la IA no responde o no hay red
+function calculateLocalFallbackInsight(sessionsList) {
+  if (!sessionsList || sessionsList.length === 0) {
+    return {
+      franjaOptima: "Mañana (09:00 - 12:00)",
+      porcentajeEnfoque: 100,
+      diagnostico: "Aún no registraste suficientes bloques; la mañana suele ofrecer la menor interferencia cognitiva.",
+      recomendaciones: [
+        "Inicia tu primera sesión de 25 minutos apenas comience tu jornada de estudio.",
+        "Usa el temporizador con teléfono en silencio antes de revisar mensajes."
+      ]
+    };
+  }
+
+  // Agrupación horaria por franjas
+  const brackets = {
+    "Mañana (07:00 - 12:00)": 0,
+    "Tarde (12:00 - 19:00)": 0,
+    "Noche (19:00 - 23:00)": 0,
+    "Madrugada (23:00 - 07:00)": 0,
+  };
+
+  let totalMinutes = 0;
+  sessionsList.forEach((s) => {
+    const d = new Date(s.date);
+    const hour = d.getHours();
+    const mins = s.minutes || 25;
+    totalMinutes += mins;
+
+    if (hour >= 7 && hour < 12) brackets["Mañana (07:00 - 12:00)"] += mins;
+    else if (hour >= 12 && hour < 19) brackets["Tarde (12:00 - 19:00)"] += mins;
+    else if (hour >= 19 && hour < 23) brackets["Noche (19:00 - 23:00)"] += mins;
+    else brackets["Madrugada (23:00 - 07:00)"] += mins;
+  });
+
+  let bestBracket = "Mañana (07:00 - 12:00)";
+  let maxMins = -1;
+
+  Object.entries(brackets).forEach(([bracket, mins]) => {
+    if (mins > maxMins) {
+      maxMins = mins;
+      bestBracket = bracket;
+    }
+  });
+
+  const percentage = totalMinutes > 0 ? Math.round((maxMins / totalMinutes) * 100) : 50;
+
+  return {
+    franjaOptima: bestBracket,
+    porcentajeEnfoque: percentage,
+    diagnostico: `Análisis local: Acumulaste el ${percentage}% de tu concentración en la franja ${bestBracket.toLowerCase()}.`,
+    recomendaciones: [
+      `Bloquea tu agenda para estudiar tus materias prioritarias durante la ${bestBracket.split(' ')[0].toLowerCase()}.`,
+      "Activa el pacto de foco analógico 5 minutos antes de ingresar a tu franja óptima."
+    ]
+  };
+}
+
+// Llamada a la API de Gemini con variable de entorno y manejo de fallo robusto
+async function getOptimalStudyTimeAnalysis(sessionsList) {
+  // Lectura de la llave de API desde variable de entorno (nunca en duro)
+  const apiKey = (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY)
+    || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY)
+    || '';
+
+  // Si no hay API key configurada, retornar análisis local con aviso
+  if (!apiKey) {
+    return {
+      data: calculateLocalFallbackInsight(sessionsList),
+      source: 'local_fallback',
+      notice: 'Llave de API no detectada en entorno. Generado con regla analítica local.'
+    };
+  }
+
+  // Preparar resumen semanal de sesiones para enviar a Gemini
+  const promptData = sessionsList.map((s) => ({
+    materia: s.subject,
+    minutos: s.minutes,
+    fechaHora: s.date,
+    notas: s.notes || 'sin notas'
+  }));
+
+  const systemInstruction = "Eres un especialista en neurociencia y hábitos de estudio Pomodoro. " +
+    "Analiza el historial semanal del estudiante e identifica en qué franja horaria rinde mejor. " +
+    "Debes responder ESTRICTAMENTE con un objeto JSON que respete el esquema especificado.";
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 7500); // 7.5s timeout
+
+  try {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: `Historial de sesiones de estudio de esta semana:\n${JSON.stringify(promptData, null, 2)}\n\n` +
+                      `Identifica la franja horaria óptima, porcentaje de rendimiento, diagnóstico y dos recomendaciones.`
+              }
+            ]
+          }
+        ],
+        systemInstruction: {
+          parts: [{ text: systemInstruction }]
+        },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: GEMINI_RESPONSE_SCHEMA,
+          temperature: 0.2
+        }
+      })
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`Error en API Gemini: código HTTP ${response.status}`);
+    }
+
+    const result = await response.json();
+    const candidateText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!candidateText) {
+      throw new Error('Respuesta vacía de la API de Gemini');
+    }
+
+    const parsedJson = JSON.parse(candidateText);
+
+    // Validación estricta de propiedades requeridas
+    if (!parsedJson.franjaOptima || typeof parsedJson.porcentajeEnfoque !== 'number') {
+      throw new Error('El JSON devuelto no cumple el esquema requerido');
+    }
+
+    return {
+      data: parsedJson,
+      source: 'gemini',
+      notice: null
+    };
+  } catch (error) {
+    clearTimeout(timeoutId);
+    console.warn('Fallo en la llamada a Gemini, activando fallback local:', error.message);
+    showToastError('La IA no pudo responder a tiempo. Mostrando análisis calculado con regla local.');
+
+    return {
+      data: calculateLocalFallbackInsight(sessionsList),
+      source: 'local_fallback',
+      notice: 'Cálculo heurístico local por contingencia de red.'
+    };
+  }
+}
+
+// Renderizar tarjetas limpias de la IA en la sección "Resumen Semanal"
+function renderAiInsightCard(insightResult) {
+  const container = document.getElementById('aiInsightContent');
+  if (!container) return;
+
+  const { data, source, notice } = insightResult;
+
+  container.innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:0.75rem; margin-top:0.5rem;">
+      <!-- Tarjeta destacada de Franja Óptima y Rendimiento -->
+      <div style="background:var(--card-parchment); border:1.5px solid var(--border-parchment); border-radius:12px; padding:0.9rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--ink-muted); display:block;">
+            Franja Horaria Más Productiva
+          </span>
+          <strong style="font-size:1.15rem; color:var(--ink); font-family:var(--font-serif); display:block; margin-top:2px;">
+            ${sanitizeHTML(data.franjaOptima)}
+          </strong>
+        </div>
+        <div style="background:#ffffff; border:1px solid var(--border-parchment); padding:0.4rem 0.75rem; border-radius:10px; text-align:right;">
+          <span style="font-size:0.7rem; color:var(--ink-muted); display:block; font-weight:600;">Efectividad</span>
+          <strong style="font-size:1.1rem; color:var(--terracotta); font-family:var(--font-mono);">${data.porcentajeEnfoque}%</strong>
+        </div>
+      </div>
+
+      <!-- Tarjeta de Diagnóstico -->
+      <div style="background:#ffffff; border:1px solid var(--border-parchment); border-radius:10px; padding:0.85rem;">
+        <span style="font-size:0.75rem; font-weight:700; color:var(--ink-muted); text-transform:uppercase; display:block; margin-bottom:0.25rem;">
+          Diagnóstico Semanal
+        </span>
+        <p style="font-size:0.95rem; color:var(--ink); line-height:1.45; margin:0;">
+          ${sanitizeHTML(data.diagnostico)}
+        </p>
+      </div>
+
+      <!-- Tarjeta de Consejos Tácticos -->
+      <div style="background:#ffffff; border:1px solid var(--border-parchment); border-radius:10px; padding:0.85rem;">
+        <span style="font-size:0.75rem; font-weight:700; color:var(--ink-muted); text-transform:uppercase; display:block; margin-bottom:0.4rem;">
+          Recomendaciones Tácticas
+        </span>
+        <ul style="margin:0; padding-left:1.2rem; display:flex; flex-direction:column; gap:0.35rem;">
+          ${data.recomendaciones.map((rec) => `
+            <li style="font-size:0.9rem; color:var(--ink); line-height:1.4;">${sanitizeHTML(rec)}</li>
+          `).join('')}
+        </ul>
+      </div>
+
+      <!-- Pie con origen del análisis -->
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--ink-muted); padding-top:0.25rem;">
+        <span>Origen: <strong>${source === 'gemini' ? '✨ Gemini 3.8 Flash' : '📊 Análisis Local (Fallback)'}</strong></span>
+        ${notice ? `<span style="font-style:italic;">${sanitizeHTML(notice)}</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// Actualizar análisis de la IA al solicitarlo
+async function triggerAiPatternAnalysis() {
+  const container = document.getElementById('aiInsightContent');
+  if (container) {
+    container.innerHTML = `
+      <div style="padding:1rem; text-align:center; color:var(--ink-muted); font-size:0.95rem;">
+        ⏳ Analizando tu historial de estudio con IA...
+      </div>
+    `;
+  }
+  const sessions = getSessions();
+  const result = await getOptimalStudyTimeAnalysis(sessions);
+  renderAiInsightCard(result);
+}
+
 // Inicialización automática al cargar la página (DOMContentLoaded)
 document.addEventListener('DOMContentLoaded', () => {
   // Cargar materias guardadas en el selector
@@ -645,6 +902,15 @@ document.addEventListener('DOMContentLoaded', () => {
     selectIntention.value = savedIntention;
   }
 
+  // Botón para refrescar análisis de la IA
+  const btnRefreshAi = document.getElementById('btnRefreshAiInsight');
+  if (btnRefreshAi) {
+    btnRefreshAi.addEventListener('click', triggerAiPatternAnalysis);
+  }
+
   updateTimerDisplay();
   renderWeeklyStats();
+
+  // Ejecución inicial del análisis de la IA
+  triggerAiPatternAnalysis();
 });
