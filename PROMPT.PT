@@ -1,0 +1,122 @@
+PROMPT 1
+
+ROL: Sos un desarrollador senior de aplicaciones web.
+
+CONTEXTO: Estoy construyendo una app llamada FOCO 25 para un estudiante que necesita concentrarse y evitar distracciones con el celular al estudiar.
+El problema que resuelve es: Se estudia con el celular en la mano y al final no se avanza por falta de enfoque y seguimiento.
+
+TAREA: Generá la primera versión funcional (P0), con estas tres funciones principales y una característica innovadora:
+1. Temporizador Pomodoro interactivo de 25 minutos de trabajo concentrado y 5 minutos de descanso corto (con botones de iniciar, pausar, reiniciar y alternar modo).
+2. Registro de sesiones completadas por materia (formulario simple para seleccionar o ingresar la materia y guardar la sesión efectuada).
+3. Resumen y gráfico visual de la semana que muestre el total de minutos de enfoque acumulados por materia y el día más productivo.
+4. TOQUE INNOVADOR ("Foco Analógico"): Un selector de intención anti-distracción antes de iniciar el temporizador (ej. "Acepto el compromiso de no tocar el celular en 25 min") y un interruptor de sonido/efecto visual de tictac vintage opcional.
+
+DISEÑO E INTERFAZ:
+- Estilo "Vintage Cálido & Minimalista": paleta de colores inspirada en papel pergamino o bitácora antigua (#fbf8f3, #f4efe6), tinta oscura de contraste suave (#1c1917), acentos cálidos en terracota/ámbar (#c2593f, #d97706) y detalles sutiles en cian cálido (#0891b2).
+- Interfaz muy simple, limpia y sin sobrecargar la pantalla, pero con personalidad y excelente contraste.
+- Totalmente responsivo desde 320 px de ancho para usar con una sola mano en el celular.
+
+RESTRICCIONES:
+- Todo en español.
+- Sin librerías de pago, sin login, sin base de datos en servidor por ahora.
+- Código limpio, semántico y comentado en los puntos clave donde alguien pueda equivocarse.
+
+REPOSITORIO Y GIT:
+- Estructura lista para el repositorio de GitHub con el nombre exacto: habitos de estudio 3196324 (nombre de carpeta recomendado: habitos-de-estudio-3196324).
+- Incluir la instrucción para preparar el primer commit con el mensaje exacto: git commit -m "P0: primera version generada con IA"
+
+FORMATO DE SALIDA:
+- Los archivos web completos (index.html, styles.css, app.js).
+- Al final, una lista explícita de lo que NO se hizo en esta versión P0 y por qué.
+
+CRITERIO DE ACEPTACIÓN:
+Abro la app en el celular o navegador, selecciono una materia, inicio el temporizador de 25 minutos, registro la sesión al terminar y veo el tiempo reflejado en la gráfica/resumen semanal sin ningún error en la consola.
+
+PROMPT 2
+
+La app ya hace: el temporizador Pomodoro (25 min / 5 min), la selección de materias con modal de colores, la tarjeta de Pacto Anti-Distracción y la vista de métricas de la semana (FOCO SEMANAL, DÍA RÉCORD y MATERIA LÍDER).
+
+Necesito agregar:
+1. En la pestaña Historial, el despliegue detallado de cada sesión registrada (materia, fecha, hora exacta y minutos), con un botón para eliminar registros individuales que recalcule automáticamente en tiempo real las métricas semanales (total de horas, día récord y materia líder).
+2. Al llegar el temporizador a 00:00, la activación de una alerta sonora de campana/notificación visual y una ventana emergente para confirmar y guardar inmediatamente esa sesión completada en la materia que estaba activa.
+
+No reescribas lo que ya funciona. Dame únicamente:
+1. Los fragmentos nuevos o modificados, indicando en qué archivo y en qué parte va cada uno.
+2. Una prueba manual de tres pasos para comprobar que quedó bien.
+3. Qué podría romperse en el resto de la app por este cambio.
+
+PROMPT 3
+
+Quiero que todos los datos de la app FOCO 25 no se pierdan al cerrar el navegador o la pestaña.
+
+Usá localStorage para guardar automáticamente:
+1. Las sesiones completadas del historial (materia, fecha, hora y minutos).
+2. Las materias creadas con sus colores seleccionados.
+3. El estado del Pacto Anti-Distracción.
+
+Requisitos técnicos y funciones:
+- Carga automática al iniciar la app (evento DOMContentLoaded). Si no hay datos guardados previamente, debe cargar automáticamente un registro de ejemplo ("Programación - 25 min") para que la app no arranque en blanco.
+- Guardado automático en localStorage cada vez que se agregue o elimine una sesión o materia.
+- Un botón "Exportar Respaldo (JSON)" y un botón "Borrar todos los datos".
+
+Explicame al final:
+1. Dónde queda guardada la información exactamente.
+2. Qué pasa si el usuario borra el caché o cambia de dispositivo.
+3. Cómo hago para exportar los datos a un archivo JSON para respaldarlos.
+
+Dame únicamente los fragmentos de código modificados para app.js e index.html, el código de guardar, leer y borrar, y los tres puntos explicados.
+
+PROMPT 4
+
+Ajustá la interfaz de la app FOCO 25 con estos requisitos, sin cambiar la lógica JavaScript:
+
+1. Se usa bien desde 320 px de ancho, con una sola mano y sin hacer zoom (áreas táctiles de al menos 48 px de alto).
+2. Contraste suficiente para leerse al sol (fondo pergamino claro #faf7f2, texto tinta #111827); texto general nunca menor a 16 px para evitar zoom automático en celulares.
+3. Todos los campos de formulario con etiqueta visible e inequívoca arriba del campo, no solo con texto de ejemplo adentro.
+4. Un solo botón principal destacado por pantalla/vista (el botón "Iniciar Foco"); los demás como secundarios con bordes o tonos neutros.
+5. Estado vacío amable e ilustrativo: cuando todavía no hay sesiones guardadas, mostrar una tarjeta destacada con un ícono grande y la frase "🎯 Todavía no has registrado tu primer bloque. Toca 'Iniciar Foco' arriba para arrancar tus 25 minutos de estudio."
+6. Mensajes de éxito y de error visibles en un aviso (toast) en español claro, sin palabras técnicas.
+
+Dame los cambios de estilo CSS y estructura HTML modificados y decime cuál de los seis puntos NO pudiste cumplir y por qué.
+
+El punto que NO se puede cumplir en su totalidad bajo la restricción de "sin cambiar la lógica JavaScript" es el Punto 6 (mensajes dinámicos de éxito y error en un aviso toast).
+
+PROMPT 5
+
+Actuá como tester de software profesional. Necesito blindar la app FOCO 25 contra entradas inválidas y errores de usuario sin cambiar el diseño ni la interfaz:
+
+1. Validar que el campo de materia no acepte textos vacíos, espacios en blanco o entradas mayores a 40 caracteres, sanitizando caracteres especiales HTML.
+2. Evitar el doble clic en el botón "Guardar Sesión" deshabilitándolo por 1.5 segundos.
+3. Envolver el JSON.parse de localStorage en un bloque try...catch para que la app no quede en blanco si los datos en memoria están corruptos.
+4. Asegurar que al cambiar de modo Enfoque/Descanso se detengan e inicialicen correctamente los intervalos del temporizador sin acelerar el reloj.
+5. Crear una función de notificación visible (showToastError) para mostrar los errores en español claro con fondo oscuro y bordes redondeados.
+
+Dame únicamente los fragmentos de código modificados para app.js e indicá en qué parte va cada uno.
+
+PROMPT 6
+Integrá una llamada a la API de Gemini dentro de la app FOCO 25 para cumplir el sello de IA del ejercicio 29:
+"La IA lee el patrón de la semana e identifica la franja horaria en que la persona rinde mejor."
+
+REQUISITOS OBLIGATORIOS:
+1. La respuesta debe venir estrictamente como JSON con el esquema fijo (responseSchema) indicado abajo, nunca como párrafo de texto libre.
+2. La app debe consumir ese JSON y renderizar los datos en tarjetas limpias dentro de la vista "Resumen Semanal".
+3. La llave de API debe leerse desde una variable de entorno (process.env.GEMINI_API_KEY o import.meta.env.VITE_GEMINI_API_KEY). Nunca pegada en duro en el código.
+4. Manejo de fallo robusto: si la IA no responde, responde lento o falla la red, la app no debe caerse ni mostrar pantallas en blanco. Se debe capturar el error con try...catch, mostrar un aviso en pantalla y calcular un análisis aproximado con lógica local (regla de decisión a mano).
+
+ESQUEMA JSON REQUERIDO (responseSchema):
+{
+  "type": "OBJECT",
+  "properties": {
+    "franjaOptima": { "type": "STRING", "description": "Ej: Noche (19:00 - 22:00)" },
+    "porcentajeEnfoque": { "type": "NUMBER", "description": "Porcentaje estimado de rendimiento en esa franja" },
+    "diagnostico": { "type": "STRING", "description": "Breve explicación en una frase sobre el patrón detectado" },
+    "recomendaciones": {
+      "type": "ARRAY",
+      "items": { "type": "STRING" },
+      "description": "Dos consejos tácticos concretos para aprovechar esa franja"
+    }
+  },
+  "required": ["franjaOptima", "porcentajeEnfoque", "diagnostico", "recomendaciones"]
+}
+
+Dame únicamente el esquema, el ejemplo de JSON de prueba para desarrollo sin consumir llamadas y el código de integración de app.js con manejo de errores y fallback local.
