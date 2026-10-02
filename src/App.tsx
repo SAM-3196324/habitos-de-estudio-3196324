@@ -21,10 +21,12 @@ import { DistractionLevel, SessionRecord, Subject, WeeklyStats } from './types';
 import { 
   calculateWeeklyStats, 
   deleteSession, 
+  exportBackupJSON,
   getActiveIntention, 
   getSavedSessions, 
   getSavedSubjects, 
   getSoundPreference, 
+  resetAllData,
   saveSession, 
   saveSubject, 
   setActiveIntention, 
@@ -339,6 +341,20 @@ export default function App() {
             sessions={sessions}
             weeklyStats={weeklyStats}
             onDeleteSession={handleDeleteSession}
+            onExportBackup={exportBackupJSON}
+            onClearAllData={() => {
+              const ok = confirm('¿Estás seguro de que deseas borrar todos los registros y restablecer FOCO 25?');
+              if (ok) {
+                resetAllData();
+                const freshSessions = getSavedSessions();
+                setSessions(freshSessions);
+                const freshSubjects = getSavedSubjects();
+                setSubjects(freshSubjects);
+                if (freshSubjects.length > 0) setActiveSubjectId(freshSubjects[0].id);
+                setGlobalNotification('🗑️ Se han borrado todos los datos y restaurado el registro inicial.');
+                setTimeout(() => setGlobalNotification(null), 4000);
+              }
+            }}
           />
         )}
       </main>

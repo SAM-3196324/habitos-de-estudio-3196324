@@ -32,37 +32,20 @@ export const PRESET_INTENTIONS: string[] = [
  */
 function generateInitialSampleSessions(): SessionRecord[] {
   const now = new Date();
-  const sampleSessions: SessionRecord[] = [];
-
-  // Crear 3 o 4 sesiones en los últimos días
-  const dayOffsets = [
-    { offset: 0, subject: DEFAULT_SUBJECTS[0], mins: 25, intention: PRESET_INTENTIONS[0], notes: 'Ejercicios de álgebra lineal' },
-    { offset: 1, subject: DEFAULT_SUBJECTS[1], mins: 25, intention: PRESET_INTENTIONS[1], notes: 'Estructuras de datos en Python' },
-    { offset: 1, subject: DEFAULT_SUBJECTS[1], mins: 25, intention: PRESET_INTENTIONS[2], notes: 'Práctica de algoritmos' },
-    { offset: 2, subject: DEFAULT_SUBJECTS[2], mins: 25, intention: PRESET_INTENTIONS[0], notes: 'Lectura revolución industrial' },
-    { offset: 2, subject: DEFAULT_SUBJECTS[0], mins: 25, intention: PRESET_INTENTIONS[3], notes: 'Repaso de derivadas' },
-  ];
-
-  dayOffsets.forEach((item, index) => {
-    const d = new Date(now);
-    d.setDate(d.getDate() - item.offset);
-    d.setHours(10 + index, 15, 0, 0);
-
-    sampleSessions.push({
-      id: `sample-session-${index + 1}`,
-      subjectId: item.subject.id,
-      subjectName: item.subject.name,
-      subjectColor: item.subject.color,
-      durationMinutes: item.mins,
+  return [
+    {
+      id: 'demo-prog-1',
+      subjectId: 'sub-prog',
+      subjectName: 'Programación',
+      subjectColor: '#0891b2',
+      durationMinutes: 25,
       mode: 'work',
-      intention: item.intention,
-      timestamp: d.toISOString(),
-      distractionLevel: index % 2 === 0 ? 'cero' : 'baja',
-      notes: item.notes,
-    });
-  });
-
-  return sampleSessions;
+      intention: PRESET_INTENTIONS[0],
+      timestamp: now.toISOString(),
+      distractionLevel: 'cero',
+      notes: 'Sesión inicial de enfoque',
+    },
+  ];
 }
 
 export function getSavedSubjects(): Subject[] {
@@ -269,3 +252,43 @@ export function calculateWeeklyStats(sessions: SessionRecord[]): WeeklyStats {
     subjectBreakdown,
   };
 }
+
+/**
+ * Exporta el respaldo completo en formato JSON
+ */
+export function exportBackupJSON() {
+  const backupData = {
+    app: 'FOCO 25',
+    exportDate: new Date().toISOString(),
+    sessions: getSavedSessions(),
+    subjects: getSavedSubjects(),
+    activeIntention: getActiveIntention(),
+  };
+
+  const jsonString = JSON.stringify(backupData, null, 2);
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateStr = new Date().toISOString().split('T')[0];
+  a.href = url;
+  a.download = `foco25_respaldo_${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Borra todos los datos y restablece el estado inicial
+ */
+export function resetAllData() {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.SESSIONS);
+    localStorage.removeItem(STORAGE_KEYS.SUBJECTS);
+    localStorage.removeItem(STORAGE_KEYS.ACTIVE_INTENTION);
+    localStorage.removeItem(STORAGE_KEYS.SOUND_ENABLED);
+  } catch (e) {
+    console.error('Error al resetear datos:', e);
+  }
+}
+

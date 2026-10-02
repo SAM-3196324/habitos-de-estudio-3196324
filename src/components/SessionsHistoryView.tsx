@@ -6,12 +6,16 @@ interface SessionsHistoryViewProps {
   sessions: SessionRecord[];
   weeklyStats: WeeklyStats | null;
   onDeleteSession: (sessionId: string) => void;
+  onExportBackup?: () => void;
+  onClearAllData?: () => void;
 }
 
 export const SessionsHistoryView: React.FC<SessionsHistoryViewProps> = ({
   sessions,
   weeklyStats,
   onDeleteSession,
+  onExportBackup,
+  onClearAllData,
 }) => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -227,6 +231,34 @@ export const SessionsHistoryView: React.FC<SessionsHistoryViewProps> = ({
             })}
           </div>
         )}
+      </div>
+
+      {/* 3. Acciones de Respaldo y Gestión de Datos */}
+      <div className="p-4 rounded-2xl bg-[#f4efe6] border border-[#e7dec8] flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div>
+          <span className="text-xs font-semibold text-[#1c1917] block">Respaldo y Seguridad de Datos</span>
+          <span className="text-[11px] text-[#78716c] block">Guarda una copia descargable o restablece la aplicación</span>
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {onExportBackup && (
+            <button
+              type="button"
+              onClick={onExportBackup}
+              className="flex-1 sm:flex-none px-4 py-2 bg-white hover:bg-[#fbf8f3] text-[#1c1917] border border-[#ded4c0] text-xs font-semibold rounded-xl transition-colors shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              📥 Exportar Respaldo (JSON)
+            </button>
+          )}
+          {onClearAllData && (
+            <button
+              type="button"
+              onClick={onClearAllData}
+              className="flex-1 sm:flex-none px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              🗑️ Borrar todos los datos
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

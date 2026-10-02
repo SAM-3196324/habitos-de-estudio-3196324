@@ -4,10 +4,36 @@
  * Autor: Asistente Senior de Desarrollo Web
  */
 
-// 1. CONSTANTES Y CONFIGURACIÓN
+// 1. CONSTANTES Y CONFIGURACIÓN DE LOCALSTORAGE
 const WORK_MINUTES = 25;
 const BREAK_MINUTES = 5;
-const STORAGE_KEY = 'foco25_sessions_p0';
+
+// Claves de almacenamiento local
+const STORAGE_KEYS = {
+  SESSIONS: 'foco25_sessions_v1',
+  SUBJECTS: 'foco25_subjects_v1',
+  INTENTION: 'foco25_intention_v1',
+};
+
+// Materias iniciales por defecto con sus colores
+const DEFAULT_SUBJECTS = [
+  { name: 'Matemáticas', color: '#c2593f' },
+  { name: 'Programación', color: '#0891b2' },
+  { name: 'Historia', color: '#d97706' },
+  { name: 'Literatura', color: '#7c3aed' },
+  { name: 'Inglés', color: '#059669' },
+];
+
+// Registro inicial de ejemplo ("Programación - 25 min") para no iniciar en blanco
+const DEFAULT_DEMO_SESSION = [
+  {
+    id: 'demo-prog-1',
+    subject: 'Programación',
+    minutes: 25,
+    date: new Date().toISOString(),
+    notes: 'Sesión inicial de enfoque',
+  },
+];
 
 // Estado global de la aplicación
 let timerMode = 'work'; // 'work' | 'break'
@@ -174,30 +200,65 @@ function setMode(mode) {
   resetTimer();
 }
 
-// 4. GESTIÓN DE SESIONES EN LOCALSTORAGE
+// 4. GESTIÓN DE SESIONES, MATERIAS E INTENCIÓN EN LOCALSTORAGE
 function getSessions() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS.SESSIONS);
     if (!raw) {
-      // Datos iniciales de demostración para ver el gráfico de inmediato
-      const initial = [
-        { id: '1', subject: 'Matemáticas', minutes: 25, date: new Date().toISOString(), notes: 'Ejercicios de cálculo' },
-        { id: '2', subject: 'Programación', minutes: 25, date: new Date().toISOString(), notes: 'Algoritmos y listas' }
-      ];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
-      return initial;
+      // Carga automática del registro de ejemplo ("Programación - 25 min") para no iniciar en blanco
+      localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(DEFAULT_DEMO_SESSION));
+      return DEFAULT_DEMO_SESSION;
     }
     return JSON.parse(raw);
   } catch (e) {
-    return [];
+    return DEFAULT_DEMO_SESSION;
   }
 }
 
 function saveSession(session) {
   const current = getSessions();
   current.unshift(session);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+  localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(current));
   renderWeeklyStats();
+}
+
+function deleteSession(id) {
+  const current = getSessions();
+  const updated = current.filter((s) => s.id !== id);
+  localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(updated));
+  renderWeeklyStats();
+}
+
+// Gestión de materias en localStorage
+function getStoredSubjects() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.SUBJECTS);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(DEFAULT_SUBJECTS));
+      return DEFAULT_SUBJECTS;
+    }
+    return JSON.parse(raw);
+  } catch (e) {
+    return DEFAULT_SUBJECTS;
+  }
+}
+
+function saveStoredSubjects(subjectsList) {
+  localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(subjectsList));
+}
+
+// Gestión del Pacto Anti-Distracción en localStorage
+function getStoredIntention() {
+  try {
+    const val = localStorage.getItem(STORAGE_KEYS.INTENTION);
+    return val || selectIntention.options[0].value;
+  } catch (e) {
+    return selectIntention.options[0].value;
+  }
+}
+
+function saveStoredIntention(intentionText) {
+  localStorage.setItem(STORAGE_KEYS.INTENTION, intentionText);
 }
 
 // 5. CÁLCULO Y RENDERIZADO DE ESTADÍSTICAS SEMANALES
@@ -346,7 +407,7 @@ formSaveSession.addEventListener('submit', (e) => {
   logModal.classList.add('hidden');
 });
 
-// 7. LISTENERS DE EVENTOS
+// 7. LISTENERS DE EVENTOS Y ACCIONES DE RESPALDO
 btnTogglePlay.addEventListener('click', togglePlay);
 btnReset.addEventListener('click', resetTimer);
 btnManualLog.addEventListener('click', () => openLogModal(WORK_MINUTES));
@@ -358,13 +419,82 @@ selectSubject.addEventListener('change', (e) => {
   activeSubjectText.textContent = e.target.value;
 });
 
+// Guardar automáticamente el estado del Pacto Anti-Distracción
+selectIntention.addEventListener('change', (e) => {
+  saveStoredIntention(e.target.value);
+});
+
 btnSoundToggle.addEventListener('click', () => {
   soundEnabled = !soundEnabled;
   soundIcon.textContent = soundEnabled ? '🔔' : '🔕';
 });
 
-// Inicialización al cargar la página
+// Exportar Respaldo en archivo JSON descargable
+const btnExportJSON = document.getElementById('btnExportJSON');
+if (btnExportJSON) {
+  btnExportJSON.addEventListener('click', () => {
+    const backupData = {
+      app: 'FOCO 25',
+      exportDate: new Date().toISOString(),
+      sessions: getSessions(),
+      subjects: getStoredSubjects(),
+      activeIntention: getStoredIntention(),
+    };
+
+    const jsonString = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().split('T')[0];
+    a.href = url;
+    a.download = `foco25_respaldo_${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+}
+
+// Borrar todos los datos y restablecer valores iniciales
+const btnClearAll = document.getElementById('btnClearAll');
+if (btnClearAll) {
+  btnClearAll.addEventListener('click', () => {
+    const ok = confirm('¿Estás seguro de que deseas borrar todos los registros y restablecer FOCO 25?');
+    if (ok) {
+      localStorage.removeItem(STORAGE_KEYS.SESSIONS);
+      localStorage.removeItem(STORAGE_KEYS.SUBJECTS);
+      localStorage.removeItem(STORAGE_KEYS.INTENTION);
+
+      // Re-inicializa con el registro por defecto ("Programación - 25 min")
+      getSessions();
+      renderWeeklyStats();
+      alert('Datos borrados. Se restauró el registro inicial de ejemplo.');
+    }
+  });
+}
+
+// Inicialización automática al cargar la página (DOMContentLoaded)
 document.addEventListener('DOMContentLoaded', () => {
+  // Cargar materias guardadas en el selector
+  const subjects = getStoredSubjects();
+  selectSubject.innerHTML = '';
+  subjects.forEach((sub) => {
+    const opt = document.createElement('option');
+    opt.value = sub.name;
+    opt.textContent = sub.name;
+    selectSubject.appendChild(opt);
+  });
+
+  if (subjects.length > 0) {
+    activeSubjectText.textContent = subjects[0].name;
+  }
+
+  // Cargar el Pacto Anti-Distracción guardado
+  const savedIntention = getStoredIntention();
+  if (savedIntention) {
+    selectIntention.value = savedIntention;
+  }
+
   updateTimerDisplay();
   renderWeeklyStats();
 });
