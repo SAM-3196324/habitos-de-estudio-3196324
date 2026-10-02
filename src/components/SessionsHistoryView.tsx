@@ -100,11 +100,10 @@ export const SessionsHistoryView: React.FC<SessionsHistoryViewProps> = ({
         </div>
 
         {sessions.length === 0 ? (
-          <div className="py-12 text-center space-y-2">
-            <BookOpen className="w-8 h-8 text-[#ded4c0] mx-auto" />
-            <p className="text-sm font-serif font-medium text-[#1c1917]">No hay sesiones en el historial</p>
-            <p className="text-xs text-[#78716c]">
-              Completa un ciclo de 25 minutos en el temporizador para ver tus registros aquí.
+          <div className="py-10 px-4 text-center my-2 rounded-2xl bg-[#f3ede2] border-2 border-dashed border-[#d9ceb9] flex flex-col items-center justify-center space-y-3">
+            <span className="text-4xl block">🎯</span>
+            <p className="text-base font-semibold text-[#111827] max-w-sm leading-relaxed">
+              🎯 Todavía no has registrado tu primer bloque. Toca 'Iniciar Foco' arriba para arrancar tus 25 minutos de estudio.
             </p>
           </div>
         ) : (

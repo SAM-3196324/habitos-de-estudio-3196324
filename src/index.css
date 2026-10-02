@@ -7,20 +7,26 @@
 }
 
 :root {
-  --parchment: #fbf8f3;
-  --parchment-card: #f4efe6;
-  --parchment-border: #e7dec8;
-  --ink: #1c1917;
+  --parchment: #faf7f2;
+  --parchment-card: #f3ede2;
+  --parchment-border: #d9ceb9;
+  --ink: #111827;
   --terracotta: #c2593f;
-  --amber-vintage: #d97706;
-  --cyan-vintage: #0891b2;
+  --amber-vintage: #b45309;
+  --cyan-vintage: #0e7490;
+}
+
+html {
+  font-size: 16px;
 }
 
 body {
   font-family: var(--font-sans);
   background-color: var(--parchment);
   color: var(--ink);
+  font-size: 1rem;
   min-height: 100vh;
+  min-width: 320px;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
@@ -29,10 +35,10 @@ body {
 
 /* Sutil textura de papel y grain de bitácora */
 .paper-texture {
-  background-color: #fbf8f3;
+  background-color: #faf7f2;
   background-image: 
     radial-gradient(#d6cbba 0.75px, transparent 0.75px),
-    radial-gradient(#ded4c3 0.75px, #fbf8f3 0.75px);
+    radial-gradient(#ded4c3 0.75px, #faf7f2 0.75px);
   background-size: 30px 30px;
   background-position: 0 0, 15px 15px;
 }

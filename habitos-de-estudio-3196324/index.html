@@ -13,6 +13,12 @@
 <body>
   <!-- Contenedor principal de la app -->
   <div id="app" class="app-container">
+    <!-- Aviso tipo Toast flotante (éxito y estado en español claro) -->
+    <div id="toastNotification" class="toast-notice" role="alert" aria-live="polite">
+      <span class="toast-icon">🎯</span>
+      <span id="toastMessage" class="toast-message">Listo para comenzar tu sesión de estudio de 25 minutos.</span>
+    </div>
+
     <!-- Encabezado superior -->
     <header class="top-bar">
       <div class="brand">
@@ -30,14 +36,17 @@
     <main class="main-content">
       <!-- Selector de Modo: Trabajo (25m) vs Descanso (5m) -->
       <section class="mode-section">
-        <div class="segmented-control">
-          <button id="btnModeWork" class="segment-btn active" data-mode="work">Foco (25 min)</button>
-          <button id="btnModeBreak" class="segment-btn" data-mode="break">Descanso (5 min)</button>
+        <div class="mode-control-group">
+          <label class="form-label">Modo de temporizador</label>
+          <div class="segmented-control">
+            <button id="btnModeWork" class="segment-btn active" data-mode="work">Foco (25 min)</button>
+            <button id="btnModeBreak" class="segment-btn" data-mode="break">Descanso (5 min)</button>
+          </div>
         </div>
 
-        <!-- Selector de Materia Activa -->
-        <div class="subject-picker">
-          <label for="selectSubject" class="sr-only">Materia</label>
+        <!-- Selector de Materia Activa con etiqueta visible -->
+        <div class="subject-picker-group">
+          <label for="selectSubject" class="form-label">Materia de estudio</label>
           <select id="selectSubject" class="select-field">
             <option value="Matemáticas">📐 Matemáticas</option>
             <option value="Programación">💻 Programación</option>
@@ -48,12 +57,9 @@
         </div>
       </section>
 
-      <!-- Toque Innovador: Pacto Anti-Distracción -->
+      <!-- Toque Innovador: Pacto Anti-Distracción con etiqueta visible -->
       <section class="commitment-card">
-        <div class="commitment-header">
-          <span class="shield-icon">🛡️</span>
-          <strong>Pacto de Foco Analógico</strong>
-        </div>
+        <label for="selectIntention" class="form-label">Pacto de Foco Analógico (Compromiso)</label>
         <select id="selectIntention" class="select-intention">
           <option value="📵 Acepto no tocar el celular por los próximos 25 minutos.">📵 Acepto no tocar el celular en 25 min</option>
           <option value="✈️ Celular en Modo Avión y guardado en la mochila.">✈️ Modo Avión y teléfono guardado</option>
@@ -123,16 +129,20 @@
         <div class="history-card">
           <h3 class="subsection-title">Bitácora de Sesiones</h3>
           <div id="sessionsHistory" class="history-list">
-            <!-- Entradas recientes -->
+            <!-- Estado vacío amable e ilustrativo inicial -->
+            <div class="empty-state-card">
+              <span class="empty-state-icon">🎯</span>
+              <p class="empty-state-text">🎯 Todavía no has registrado tu primer bloque. Toca 'Iniciar Foco' arriba para arrancar tus 25 minutos de estudio.</p>
+            </div>
           </div>
         </div>
 
         <!-- Acciones de respaldo y gestión de datos -->
         <div class="backup-actions" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
-          <button id="btnExportJSON" class="btn-secondary" style="flex: 1; height: 38px; font-size: 0.75rem; font-weight: 600; width: auto; padding: 0 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+          <button id="btnExportJSON" class="btn-secondary" style="flex: 1; height: 48px; min-height: 48px; font-size: 1rem; font-weight: 600; width: auto; padding: 0 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
             📥 Exportar Respaldo (JSON)
           </button>
-          <button id="btnClearAll" class="btn-secondary" style="height: 38px; font-size: 0.75rem; font-weight: 600; width: auto; padding: 0 12px; color: #dc2626; border-color: #fca5a5;">
+          <button id="btnClearAll" class="btn-secondary" style="height: 48px; min-height: 48px; font-size: 1rem; font-weight: 600; width: auto; padding: 0 16px; color: #b91c1c; border-color: #f87171;">
             🗑️ Borrar todos los datos
           </button>
         </div>
@@ -142,20 +152,20 @@
     <!-- Modal de registro de sesión completada -->
     <div id="logModal" class="modal-overlay hidden">
       <div class="modal-card">
-        <h3>¡Sesión de 25 min Lograda!</h3>
-        <p>Guarda el registro de tu esfuerzo en la bitácora:</p>
+        <h3 class="modal-title">¡Sesión de 25 min Lograda!</h3>
+        <p class="modal-subtitle">Guarda el registro de tu esfuerzo en la bitácora:</p>
         <form id="formSaveSession">
           <div class="form-group">
-            <label>Materia estudiada:</label>
+            <label for="modalSubject" class="form-label">Materia estudiada:</label>
             <input type="text" id="modalSubject" class="input-text" readonly />
           </div>
           <div class="form-group">
-            <label>Minutos de concentración:</label>
+            <label for="modalMins" class="form-label">Minutos de concentración:</label>
             <input type="number" id="modalMins" class="input-text" value="25" />
           </div>
           <div class="form-group">
-            <label>¿Qué avanzaste? (opcional):</label>
-            <input type="text" id="modalNotes" class="input-text" placeholder="Ej. Ejercicios tema 4 resueltos" />
+            <label for="modalNotes" class="form-label">Tema o avance alcanzado (opcional):</label>
+            <input type="text" id="modalNotes" class="input-text" placeholder="Ej. Ejercicios de cálculo resueltos" />
           </div>
           <div class="modal-buttons">
             <button type="button" id="btnCancelModal" class="btn-cancel">Descartar</button>

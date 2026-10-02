@@ -1,18 +1,19 @@
 /* ==========================================================
-   FOCO 25 - Estilos Vintage Cálido & Minimalista
-   Paleta: Pergamino (#fbf8f3), Tinta (#1c1917), Terracota (#c2593f)
+   FOCO 25 - Estilos con Alto Contraste y Ergonomía Móvil
+   Paleta: Pergamino claro (#faf7f2), Tinta profunda (#111827)
+   Requisitos: 320px mínimo, táctiles >= 48px, texto >= 16px
    ========================================================== */
 
 :root {
-  --bg-parchment: #fbf8f3;
-  --card-parchment: #f4efe6;
-  --border-parchment: #e7dec8;
-  --ink: #1c1917;
-  --ink-muted: #78716c;
-  --terracotta: #c2593f;
+  --bg-parchment: #faf7f2;
+  --card-parchment: #f3ede2;
+  --border-parchment: #d9ceb9;
+  --ink: #111827;        /* Negro tinta de altísimo contraste (WCAG AAA > 12:1) */
+  --ink-muted: #374151;  /* Gris profundo legible al sol (> 6.5:1) */
+  --terracotta: #c2593f; /* Color exclusivo del botón principal "Iniciar Foco" */
   --terracotta-dark: #a84830;
-  --amber: #d97706;
-  --cyan: #0891b2;
+  --amber: #b45309;
+  --cyan: #0e7490;
   --font-serif: 'Newsreader', Georgia, serif;
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -24,21 +25,63 @@
   padding: 0;
 }
 
+html {
+  font-size: 16px; /* Garantiza que nada sea menor a 16px para evitar auto-zoom en móviles */
+}
+
 body {
   font-family: var(--font-sans);
+  font-size: 1rem; /* 16px */
   background-color: var(--bg-parchment);
   color: var(--ink);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  min-width: 320px;
 }
 
+/* Contenedor responsivo para uso con una sola mano desde 320px */
 .app-container {
+  width: 100%;
   max-width: 480px;
+  min-width: 320px;
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-bottom: 2rem;
+  padding-bottom: 2.5rem;
+}
+
+/* 6. Aviso tipo Toast flotante (mensajes claros de éxito/aviso) */
+.toast-notice {
+  position: sticky;
+  top: 0.5rem;
+  z-index: 100;
+  margin: 0.5rem 1rem;
+  background-color: #111827;
+  color: #faf7f2;
+  border-radius: 12px;
+  padding: 0.85rem 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 1rem; /* 16px */
+  font-weight: 500;
+  box-shadow: 0 4px 14px rgba(17, 24, 39, 0.25);
+  border: 1px solid #374151;
+}
+
+.toast-notice.hidden {
+  display: none;
+}
+
+.toast-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  flex: 1;
+  line-height: 1.4;
 }
 
 /* Barra superior */
@@ -46,9 +89,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border-parchment);
-  background-color: rgba(251, 248, 243, 0.95);
+  padding: 1rem;
+  border-bottom: 1.5px solid var(--border-parchment);
+  background-color: var(--bg-parchment);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -62,113 +105,132 @@ body {
 
 .logo-title {
   font-family: var(--font-serif);
-  font-size: 1.35rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--ink);
   letter-spacing: -0.02em;
 }
 
 .badge-tag {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-family: var(--font-mono);
   background: #fbeee9;
   color: var(--terracotta);
-  padding: 0.2rem 0.4rem;
-  border-radius: 4px;
-  border: 1px solid rgba(194, 89, 63, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 700;
+  border: 1px solid rgba(194, 89, 63, 0.3);
   text-transform: uppercase;
 }
 
+/* 1. Área táctil mínima de 48px para botones de iconos */
 .btn-icon {
   background: white;
-  border: 1px solid var(--border-parchment);
-  border-radius: 8px;
-  width: 36px;
-  height: 36px;
+  border: 1.5px solid var(--border-parchment);
+  border-radius: 12px;
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.2rem;
   cursor: pointer;
+  color: var(--ink);
 }
 
-/* Secciones de contenido */
+/* Contenido principal */
 .main-content {
-  padding: 1.25rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
 }
 
-.mode-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
+/* 3. Etiquetas visibles e inequívocas para todos los campos */
+.form-label {
+  display: block;
+  font-size: 1rem; /* 16px */
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
 }
 
+.mode-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mode-control-group, .subject-picker-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Controles segmentados con áreas táctiles de 48px */
 .segmented-control {
   display: flex;
   background: var(--card-parchment);
-  padding: 0.25rem;
-  border-radius: 10px;
-  border: 1px solid var(--border-parchment);
+  padding: 0.35rem;
+  border-radius: 12px;
+  border: 1.5px solid var(--border-parchment);
+  gap: 0.25rem;
 }
 
 .segment-btn {
-  border: none;
+  flex: 1;
+  border: 1.5px solid transparent;
   background: transparent;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.75rem;
+  min-height: 48px;
+  font-size: 1rem; /* 16px */
   font-weight: 600;
   color: var(--ink-muted);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Botón secundario seleccionado (neutro sin competir con Iniciar Foco) */
 .segment-btn.active {
-  background: var(--terracotta);
-  color: white;
+  background: #ffffff;
+  color: var(--ink);
+  border-color: var(--border-parchment);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.select-field {
-  padding: 0.45rem 0.6rem;
-  font-size: 0.75rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-parchment);
-  background: white;
+/* 1 y 2. Selectores de formulario con altura de 48px y texto de 16px */
+.select-field, .select-intention, .input-text {
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 0.85rem;
+  font-size: 1rem; /* 16px exactos: previene zoom involuntario en iPhone */
+  font-family: var(--font-sans);
+  border-radius: 12px;
+  border: 1.5px solid var(--border-parchment);
+  background: #ffffff;
   color: var(--ink);
+  font-weight: 500;
   cursor: pointer;
+}
+
+.select-field:focus, .select-intention:focus, .input-text:focus {
+  outline: none;
+  border-color: var(--ink);
 }
 
 /* Tarjeta del compromiso analógico */
 .commitment-card {
-  background: white;
-  border: 1px solid var(--border-parchment);
-  border-radius: 12px;
-  padding: 0.75rem;
+  background: #ffffff;
+  border: 1.5px solid var(--border-parchment);
+  border-radius: 14px;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-}
-
-.commitment-header {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.75rem;
-  color: var(--ink-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.select-intention {
-  width: 100%;
-  border: 1px solid var(--border-parchment);
-  border-radius: 6px;
-  padding: 0.5rem;
-  font-size: 0.8rem;
-  background: #fbf8f3;
-  color: var(--ink);
 }
 
 /* Temporizador circular */
@@ -195,13 +257,13 @@ body {
 .ring-bg {
   fill: var(--card-parchment);
   stroke: var(--border-parchment);
-  stroke-width: 8;
+  stroke-width: 10;
 }
 
 .ring-progress {
   fill: transparent;
   stroke: var(--terracotta);
-  stroke-width: 8;
+  stroke-width: 10;
   stroke-dasharray: 660;
   stroke-dashoffset: 0;
   stroke-linecap: round;
@@ -214,56 +276,81 @@ body {
 }
 
 .timer-status {
-  font-size: 0.65rem;
+  font-size: 0.85rem;
   font-family: var(--font-mono);
+  font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--ink-muted);
 }
 
 .time-text {
   font-family: var(--font-mono);
-  font-size: 3rem;
-  font-weight: 700;
+  font-size: 3.25rem;
+  font-weight: 800;
+  color: var(--ink);
   letter-spacing: -0.05em;
+  line-height: 1;
+  margin: 0.25rem 0;
 }
 
 .active-subject-label {
-  font-size: 0.8rem;
-  color: var(--terracotta);
-  font-weight: 600;
+  font-size: 1rem;
+  color: var(--ink);
+  font-weight: 700;
 }
 
-/* Botones de control */
+/* Controles del temporizador */
 .timer-controls {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
   width: 100%;
 }
 
+/* 4. EL ÚNICO BOTÓN PRINCIPAL DESTACADO POR PANTALLA: "Iniciar Foco" */
 .btn-primary {
   flex: 1;
-  background: var(--terracotta);
-  color: white;
+  background: var(--terracotta); /* Terracota cálido protagonista */
+  color: #ffffff;
   border: none;
-  border-radius: 12px;
-  height: 48px;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: 14px;
+  height: 52px;
+  min-height: 48px;
+  font-size: 1.1rem; /* >= 16px */
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(194, 89, 63, 0.25);
+  box-shadow: 0 4px 12px rgba(194, 89, 63, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* 4. BOTONES SECUNDARIOS CON BORDES Y TONOS NEUTROS */
 .btn-secondary {
-  width: 48px;
-  height: 48px;
-  background: white;
-  border: 1px solid var(--border-parchment);
-  border-radius: 12px;
+  width: 52px;
+  min-width: 48px;
+  height: 52px;
+  min-height: 48px;
+  background: #ffffff;
+  border: 1.5px solid var(--border-parchment);
+  border-radius: 14px;
   font-size: 1.25rem;
   color: var(--ink);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.btn-secondary:hover {
+  background: var(--card-parchment);
 }
 
 /* Resumen semanal y gráficos */
@@ -281,14 +368,15 @@ body {
 
 .section-title {
   font-family: var(--font-serif);
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--ink);
 }
 
 .record-badge {
-  font-size: 0.75rem;
-  color: var(--terracotta);
-  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .stats-row {
@@ -298,36 +386,39 @@ body {
 }
 
 .stat-box {
-  background: white;
-  border: 1px solid var(--border-parchment);
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
+  background: #ffffff;
+  border: 1.5px solid var(--border-parchment);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
 }
 
 .stat-label {
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   color: var(--ink-muted);
   text-transform: uppercase;
+  font-weight: 600;
   display: block;
 }
 
 .stat-value {
   font-family: var(--font-mono);
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--ink);
 }
 
 .chart-container {
-  background: white;
-  border: 1px solid var(--border-parchment);
-  border-radius: 12px;
+  background: #ffffff;
+  border: 1.5px solid var(--border-parchment);
+  border-radius: 14px;
   padding: 1rem;
 }
 
 .chart-title {
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   color: var(--ink-muted);
   margin-bottom: 0.75rem;
+  font-weight: 600;
 }
 
 .chart-bars {
@@ -355,47 +446,78 @@ body {
 }
 
 .bar-pill.peak {
-  background: var(--terracotta);
+  background: var(--ink); /* Barra pico en tinta de alto contraste */
 }
 
 .bar-label {
-  font-size: 0.65rem;
-  color: var(--ink-muted);
-  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--ink);
+  font-weight: 700;
+  margin-top: 0.35rem;
 }
 
 .subject-breakdown-card, .history-card {
-  background: white;
-  border: 1px solid var(--border-parchment);
-  border-radius: 12px;
-  padding: 1rem;
+  background: #ffffff;
+  border: 1.5px solid var(--border-parchment);
+  border-radius: 14px;
+  padding: 1.1rem;
 }
 
 .subsection-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.75rem;
 }
 
 .breakdown-item {
   display: flex;
   justify-content: space-between;
-  font-size: 0.8rem;
-  padding: 0.35rem 0;
+  font-size: 1rem; /* 16px */
+  padding: 0.5rem 0;
   border-bottom: 1px solid var(--border-parchment);
+  color: var(--ink);
 }
 
 .history-item {
-  font-size: 0.8rem;
-  padding: 0.5rem 0;
+  font-size: 1rem; /* 16px */
+  padding: 0.75rem 0;
   border-bottom: 1px solid var(--border-parchment);
+  color: var(--ink);
+}
+
+/* 5. ESTADO VACÍO AMABLE E ILUSTRATIVO */
+.empty-state-card {
+  background: var(--card-parchment);
+  border: 1.5px dashed var(--border-parchment);
+  border-radius: 14px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.empty-state-icon {
+  font-size: 2.75rem;
+  display: block;
+}
+
+.empty-state-text {
+  font-size: 1rem; /* 16px */
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.45;
+  max-width: 340px;
 }
 
 /* Modales */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(28, 25, 23, 0.6);
+  background: rgba(17, 24, 39, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -409,52 +531,60 @@ body {
 
 .modal-card {
   background: var(--bg-parchment);
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 1.5rem;
   width: 100%;
-  max-width: 360px;
-  border: 1px solid var(--border-parchment);
+  max-width: 380px;
+  min-width: 300px;
+  border: 1.5px solid var(--border-parchment);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+.modal-title {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.modal-subtitle {
+  font-size: 0.95rem;
+  color: var(--ink-muted);
+  margin-top: 0.25rem;
 }
 
 .form-group {
-  margin: 0.75rem 0;
+  margin: 1rem 0;
 }
 
-.form-group label {
-  font-size: 0.75rem;
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.input-text {
-  width: 100%;
-  padding: 0.5rem;
-  border-radius: 6px;
-  border: 1px solid var(--border-parchment);
-  font-size: 0.85rem;
-}
-
+/* Botones del modal: Secundarios con bordes o tonos neutros para no rivalizar */
 .modal-buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
 }
 
 .btn-cancel {
   background: transparent;
-  border: none;
+  border: 1.5px solid var(--border-parchment);
   color: var(--ink-muted);
   cursor: pointer;
-  padding: 0.5rem 0.75rem;
+  padding: 0 1rem;
+  min-height: 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
 }
 
 .btn-confirm {
-  background: var(--terracotta);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  font-weight: 600;
+  background: #ffffff;
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  padding: 0 1.25rem;
+  min-height: 48px;
+  font-size: 1rem;
+  font-weight: 700;
   cursor: pointer;
 }
