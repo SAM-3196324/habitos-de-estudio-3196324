@@ -86,8 +86,14 @@ export const SessionCompletionModal: React.FC<SessionCompletionModalProps> = ({
               <Award className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-serif font-bold text-[#1c1917]">¡Sesión de Enfoque Lograda!</h2>
-              <p className="text-xs text-[#78716c]">Registra tus 25 minutos de avance en la bitácora</p>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-mono font-bold text-[#c2593f] bg-[#fbeee9] px-2 py-0.5 rounded">
+                  00:00 · TIEMPO CUMPLIDO
+                </span>
+              </div>
+              <h2 className="text-lg font-serif font-bold text-[#1c1917] mt-0.5">
+                Guardar Sesión en {currentSubject?.name || 'Materia'}
+              </h2>
             </div>
           </div>
           <button 

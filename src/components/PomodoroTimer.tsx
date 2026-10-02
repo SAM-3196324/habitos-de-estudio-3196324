@@ -29,6 +29,7 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
   const [secondsLeft, setSecondsLeft] = useState<number>(WORK_SECONDS);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [tickToggle, setTickToggle] = useState<boolean>(false); // Para alternar tic-toc
+  const [showVisualAlert, setShowVisualAlert] = useState<boolean>(false);
 
   const totalTime = mode === 'work' ? WORK_SECONDS : BREAK_SECONDS;
   const progressRatio = Math.max(0, Math.min(1, (totalTime - secondsLeft) / totalTime));
@@ -48,10 +49,13 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
       intervalRef.current = setInterval(() => {
         setSecondsLeft((prev) => {
           if (prev <= 1) {
-            // Tiempo completado!
+            // Tiempo completado a las 00:00
             clearInterval(intervalRef.current!);
             setIsRunning(false);
             vintageAudio.playBell();
+            setShowVisualAlert(true);
+            setTimeout(() => setShowVisualAlert(false), 5000);
+
             if (mode === 'work') {
               onCompleteSession(25);
             }
@@ -113,6 +117,25 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center">
+      {/* Notificación visual prominente al llegar a 00:00 */}
+      {showVisualAlert && (
+        <div className="w-full max-w-sm mb-4 p-3.5 bg-[#c2593f] text-white rounded-2xl shadow-lg border border-[#a84830] flex items-center justify-between gap-3 animate-bounce">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🔔</span>
+            <div>
+              <span className="text-xs font-bold block">¡00:00 · Tiempo de Foco Cumplido!</span>
+              <span className="text-[11px] opacity-90 block">Sesión completada en {activeSubject.name}</span>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowVisualAlert(false)}
+            className="text-xs underline text-white/90 hover:text-white"
+          >
+            Cerrar
+          </button>
+        </div>
+      )}
+
       {/* 1. Selector de Modo y Selector de Materia */}
       <div className="w-full max-w-sm flex items-center justify-between gap-2 mb-4">
         {/* Toggle Trabajo / Descanso */}
@@ -318,14 +341,30 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
 
         {/* Botón de escape rápido para registrar sesión completada manualmente */}
         {mode === 'work' && (
-          <button
-            type="button"
-            onClick={() => onCompleteSession(25)}
-            className="w-full py-2.5 px-3 text-xs font-medium text-[#78716c] hover:text-[#1c1917] hover:bg-[#f4efe6] rounded-xl border border-dashed border-[#ded4c0] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
-            <span>¿Ya estudiaste? Registrar 25 min directamente en bitácora</span>
-          </button>
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => onCompleteSession(25)}
+              className="w-full py-2.5 px-3 text-xs font-medium text-[#78716c] hover:text-[#1c1917] hover:bg-[#f4efe6] rounded-xl border border-dashed border-[#ded4c0] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
+              <span>¿Ya estudiaste? Registrar 25 min directamente en bitácora</span>
+            </button>
+
+            {/* Atajo de prueba rápida de 00:00 para evaluación inmediata */}
+            <button
+              type="button"
+              onClick={() => {
+                setSecondsLeft(3);
+                setIsRunning(true);
+              }}
+              className="w-full py-1.5 text-[11px] text-[#c2593f] hover:bg-[#fbeee9] rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer"
+              title="Ajusta el reloj a 3 segundos y lo inicia para probar la campana y el modal de 00:00"
+            >
+              <Sparkles className="w-3 h-3" />
+              <span>Probar llegada a 00:00 (en 3 segundos)</span>
+            </button>
+          </div>
         )}
       </div>
     </div>

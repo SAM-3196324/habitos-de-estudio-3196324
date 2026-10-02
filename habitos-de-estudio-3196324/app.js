@@ -228,8 +228,10 @@ function renderWeeklyStats() {
     }
   });
 
-  // Totales
-  totalWeeklyMins.textContent = `${totalMins} min`;
+  // Totales en tiempo real
+  const hours = Math.floor(totalMins / 60);
+  const remMins = totalMins % 60;
+  totalWeeklyMins.textContent = hours > 0 ? `${hours} h ${remMins} min` : `${totalMins} min`;
   totalWeeklySessions.textContent = sessions.length;
 
   // Encontrar el día récord
@@ -273,21 +275,48 @@ function renderWeeklyStats() {
     });
   }
 
-  // Renderizar historial reciente
+  // Renderizar historial con detalle (materia, fecha, hora exacta y botón de eliminar)
   sessionsHistory.innerHTML = '';
-  const recent = sessions.slice(0, 5);
-  if (recent.length === 0) {
-    sessionsHistory.innerHTML = '<p class="stat-label">No hay registros aún</p>';
+  if (sessions.length === 0) {
+    sessionsHistory.innerHTML = '<p class="stat-label">No hay registros en la bitácora</p>';
   } else {
-    recent.forEach((s) => {
+    sessions.forEach((s) => {
       const d = new Date(s.date);
+      const dateFormatted = d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+      const exactTimeFormatted = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
       const item = document.createElement('div');
       item.className = 'history-item';
+      item.style.display = 'flex';
+      item.style.justifyContent = 'space-between';
+      item.style.alignItems = 'center';
+      item.style.gap = '8px';
+
       item.innerHTML = `
-        <strong>${s.subject}</strong> · ${s.minutes} min · <small>${d.toLocaleDateString()}</small>
-        ${s.notes ? `<div style="color:#78716c;font-size:0.75rem;">${s.notes}</div>` : ''}
+        <div style="flex: 1; min-width: 0;">
+          <div>
+            <strong style="color:#c2593f;">${s.subject}</strong> · <strong>${s.minutes} min</strong>
+          </div>
+          <small style="color:#78716c; display:block;">${dateFormatted} · Hora: ${exactTimeFormatted}</small>
+          ${s.notes ? `<small style="color:#44403c; display:block;">📝 ${s.notes}</small>` : ''}
+        </div>
+        <button type="button" class="btn-del" data-id="${s.id}" style="border: 1px solid #e7dec8; background: white; border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; color: #a8a29e; cursor: pointer;">
+          ✕ Eliminar
+        </button>
       `;
       sessionsHistory.appendChild(item);
+    });
+
+    document.querySelectorAll('.btn-del').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.getAttribute('data-id');
+        if (id) {
+          const current = getSessions();
+          const updated = current.filter((x) => x.id !== id);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+          renderWeeklyStats();
+        }
+      });
     });
   }
 }
