@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>FOCO 25 - Hábitos de Estudio y Pomodoro</title>
+  <!-- Fuentes Google: Estilo editorial vintage y números tabulares -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400;1,6..72,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Contenedor principal de la app -->
+  <div id="app" class="app-container">
+    <!-- Encabezado superior -->
+    <header class="top-bar">
+      <div class="brand">
+        <h1 class="logo-title">FOCO 25</h1>
+        <span class="badge-tag">Bitácora Pomodoro</span>
+      </div>
+      <div class="top-actions">
+        <button id="btnSoundToggle" class="btn-icon" title="Sonido tictac analógico">
+          <span id="soundIcon">🔔</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Contenido principal -->
+    <main class="main-content">
+      <!-- Selector de Modo: Trabajo (25m) vs Descanso (5m) -->
+      <section class="mode-section">
+        <div class="segmented-control">
+          <button id="btnModeWork" class="segment-btn active" data-mode="work">Foco (25 min)</button>
+          <button id="btnModeBreak" class="segment-btn" data-mode="break">Descanso (5 min)</button>
+        </div>
+
+        <!-- Selector de Materia Activa -->
+        <div class="subject-picker">
+          <label for="selectSubject" class="sr-only">Materia</label>
+          <select id="selectSubject" class="select-field">
+            <option value="Matemáticas">📐 Matemáticas</option>
+            <option value="Programación">💻 Programación</option>
+            <option value="Historia">📜 Historia</option>
+            <option value="Literatura">📖 Literatura</option>
+            <option value="Inglés">🇬🇧 Inglés</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Toque Innovador: Pacto Anti-Distracción -->
+      <section class="commitment-card">
+        <div class="commitment-header">
+          <span class="shield-icon">🛡️</span>
+          <strong>Pacto de Foco Analógico</strong>
+        </div>
+        <select id="selectIntention" class="select-intention">
+          <option value="📵 Acepto no tocar el celular por los próximos 25 minutos.">📵 Acepto no tocar el celular en 25 min</option>
+          <option value="✈️ Celular en Modo Avión y guardado en la mochila.">✈️ Modo Avión y teléfono guardado</option>
+          <option value="🛡️ Cierro pestañas distractoras; solo el apunte y yo.">🛡️ Cierro pestañas distractoras</option>
+          <option value="🧘 Mente presente: una sola tarea hasta que suene la campana.">🧘 Mente presente: solo una tarea</option>
+        </select>
+      </section>
+
+      <!-- Esfera del Temporizador Circular -->
+      <section class="timer-section">
+        <div class="timer-clock">
+          <svg class="progress-ring" width="240" height="240">
+            <circle class="ring-bg" cx="120" cy="120" r="105"></circle>
+            <circle id="progressCircle" class="ring-progress" cx="120" cy="120" r="105"></circle>
+          </svg>
+          <div class="timer-display">
+            <div id="timerStatus" class="timer-status">LISTO</div>
+            <div id="timeText" class="time-text">25:00</div>
+            <div id="activeSubjectText" class="active-subject-label">Matemáticas</div>
+          </div>
+        </div>
+
+        <!-- Controles ergonómicos -->
+        <div class="timer-controls">
+          <button id="btnReset" class="btn-secondary" title="Reiniciar">↺</button>
+          <button id="btnTogglePlay" class="btn-primary">Iniciar Foco</button>
+          <button id="btnManualLog" class="btn-secondary" title="Completar y registrar ahora">✓</button>
+        </div>
+      </section>
+
+      <!-- Resumen Semanal y Gráfico Visual -->
+      <section class="weekly-section">
+        <div class="section-title-wrap">
+          <h2 class="section-title">Resumen Semanal</h2>
+          <span id="bestDayBadge" class="record-badge">Día récord: -</span>
+        </div>
+
+        <!-- Métricas Rápidas -->
+        <div class="stats-row">
+          <div class="stat-box">
+            <span class="stat-label">Minutos Semanales</span>
+            <span id="totalWeeklyMins" class="stat-value">0 min</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Sesiones</span>
+            <span id="totalWeeklySessions" class="stat-value">0</span>
+          </div>
+        </div>
+
+        <!-- Gráfico de barras de los 7 días de la semana -->
+        <div class="chart-container">
+          <div class="chart-title">Distribución de Lunes a Domingo</div>
+          <div id="weeklyBars" class="chart-bars">
+            <!-- Las barras se generan dinámicamente con JavaScript -->
+          </div>
+        </div>
+
+        <!-- Desglose por materia -->
+        <div class="subject-breakdown-card">
+          <h3 class="subsection-title">Minutos por Materia</h3>
+          <div id="subjectBreakdownList" class="breakdown-list">
+            <!-- Items de materias dinámicos -->
+          </div>
+        </div>
+
+        <!-- Historial de sesiones recientes -->
+        <div class="history-card">
+          <h3 class="subsection-title">Bitácora de Sesiones</h3>
+          <div id="sessionsHistory" class="history-list">
+            <!-- Entradas recientes -->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal de registro de sesión completada -->
+    <div id="logModal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <h3>¡Sesión de 25 min Lograda!</h3>
+        <p>Guarda el registro de tu esfuerzo en la bitácora:</p>
+        <form id="formSaveSession">
+          <div class="form-group">
+            <label>Materia estudiada:</label>
+            <input type="text" id="modalSubject" class="input-text" readonly />
+          </div>
+          <div class="form-group">
+            <label>Minutos de concentración:</label>
+            <input type="number" id="modalMins" class="input-text" value="25" />
+          </div>
+          <div class="form-group">
+            <label>¿Qué avanzaste? (opcional):</label>
+            <input type="text" id="modalNotes" class="input-text" placeholder="Ej. Ejercicios tema 4 resueltos" />
+          </div>
+          <div class="modal-buttons">
+            <button type="button" id="btnCancelModal" class="btn-cancel">Descartar</button>
+            <button type="submit" class="btn-confirm">Guardar en Bitácora</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

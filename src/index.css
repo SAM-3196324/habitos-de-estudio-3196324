@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: 'Newsreader', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+:root {
+  --parchment: #fbf8f3;
+  --parchment-card: #f4efe6;
+  --parchment-border: #e7dec8;
+  --ink: #1c1917;
+  --terracotta: #c2593f;
+  --amber-vintage: #d97706;
+  --cyan-vintage: #0891b2;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--parchment);
+  color: var(--ink);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Sutil textura de papel y grain de bitácora */
+.paper-texture {
+  background-color: #fbf8f3;
+  background-image: 
+    radial-gradient(#d6cbba 0.75px, transparent 0.75px),
+    radial-gradient(#ded4c3 0.75px, #fbf8f3 0.75px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+}
+
+/* Efecto de marco de cuaderno antiguo */
+.notebook-border {
+  border: 1px solid #e2d7c3;
+  box-shadow: 0 1px 3px rgba(44, 38, 30, 0.04), 0 4px 12px rgba(44, 38, 30, 0.03);
+}
+
+/* Animación de latido sutil para el escape mecánico */
+@keyframes tickPulse {
+  0% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.03); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.9; }
+}
+
+.animate-tick-pulse {
+  animation: tickPulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+

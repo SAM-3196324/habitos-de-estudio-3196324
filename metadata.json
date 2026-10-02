@@ -1,0 +1,7 @@
+{
+  "name": "FOCO 25 - Temporizador y Hábitos de Estudio",
+  "description": "Temporizador Pomodoro vintage de 25 min para estudiantes, con compromiso anti-distracción, registro por materia y resumen semanal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
