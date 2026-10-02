@@ -33,12 +33,14 @@ export const SessionCompletionModal: React.FC<SessionCompletionModalProps> = ({
   const [duration, setDuration] = useState(initialDurationMinutes);
   const [distractionLevel, setDistractionLevel] = useState<DistractionLevel>('cero');
   const [notes, setNotes] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Disparar confeti sutil de celebración al abrir el modal
   useEffect(() => {
     if (isOpen) {
       setSelectedSubjectId(initialSubjectId);
       setDuration(initialDurationMinutes);
+      setIsSaving(false);
 
       try {
         confetti({
@@ -60,7 +62,10 @@ export const SessionCompletionModal: React.FC<SessionCompletionModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentSubject) return;
+    if (!currentSubject || isSaving) return;
+
+    setIsSaving(true);
+    setTimeout(() => setIsSaving(false), 1500);
 
     onSaveSession({
       subjectId: currentSubject.id,
@@ -213,10 +218,13 @@ export const SessionCompletionModal: React.FC<SessionCompletionModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 text-xs font-semibold text-white bg-[#c2593f] hover:bg-[#a84830] rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              disabled={isSaving}
+              className={`px-5 py-2.5 text-xs font-semibold text-white bg-[#c2593f] hover:bg-[#a84830] rounded-xl shadow-xs transition-colors flex items-center gap-1.5 ${
+                isSaving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+              }`}
             >
               <Check className="w-3.5 h-3.5" />
-              Guardar en Bitácora
+              {isSaving ? 'Guardando...' : 'Guardar en Bitácora'}
             </button>
           </div>
         </form>

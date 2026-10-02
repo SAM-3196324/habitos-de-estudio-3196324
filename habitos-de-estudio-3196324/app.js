@@ -45,6 +45,72 @@ let soundEnabled = true;
 // Web Audio API para tictac analógico vintage
 let audioCtx = null;
 
+// ==========================================================
+// 1. UTILIDADES DE SANITIZACIÓN Y NOTIFICACIÓN DE ERRORES (PUNTOS 1 y 5)
+// ==========================================================
+
+/**
+ * Muestra una notificación visual accesible en español claro ante errores,
+ * con fondo oscuro (#111827), bordes redondeados y texto legible.
+ */
+function showToastError(message) {
+  let toast = document.getElementById('toastNotification');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toastNotification';
+    toast.className = 'toast-notice';
+    document.body.prepend(toast);
+  }
+
+  // Estilos de alto contraste y esquinas redondeadas
+  toast.style.backgroundColor = '#111827';
+  toast.style.color = '#fef2f2';
+  toast.style.border = '1.5px solid #ef4444';
+  toast.style.borderRadius = '14px';
+  toast.style.padding = '0.85rem 1.15rem';
+  toast.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.35)';
+
+  toast.innerHTML = `
+    <span style="font-size: 1.25rem; flex-shrink: 0;">⚠️</span>
+    <span style="flex: 1; font-size: 1rem; font-weight: 600; line-height: 1.4;">${sanitizeHTML(message)}</span>
+  `;
+  toast.classList.remove('hidden');
+
+  if (window.toastTimeout) clearTimeout(window.toastTimeout);
+  window.toastTimeout = setTimeout(() => {
+    toast.classList.add('hidden');
+  }, 4000);
+}
+
+/**
+ * Sanitiza caracteres especiales HTML para prevenir inyecciones (XSS).
+ */
+function sanitizeHTML(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
+ * Valida y sanitiza la materia: no vacía, sin espacios en blanco solos y máximo 40 caracteres.
+ */
+function validateAndSanitizeSubject(rawSubject) {
+  const trimmed = (rawSubject || '').trim();
+  if (!trimmed) {
+    showToastError('El nombre de la materia no puede estar vacío.');
+    return null;
+  }
+  if (trimmed.length > 40) {
+    showToastError('El nombre de la materia no puede superar los 40 caracteres.');
+    return null;
+  }
+  return sanitizeHTML(trimmed);
+}
+
 function getAudioContext() {
   if (!audioCtx) {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -149,6 +215,12 @@ function togglePlay() {
 }
 
 function startTimer() {
+  // Punto 4: Limpieza preventiva de intervalos para evitar que el reloj se acelere
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
   isRunning = true;
   timerStatus.textContent = timerMode === 'work' ? 'EN CONCENTRACIÓN' : 'DESCANSO';
   btnTogglePlay.textContent = 'Pausar';
@@ -158,6 +230,7 @@ function startTimer() {
   timerInterval = setInterval(() => {
     if (secondsLeft <= 1) {
       clearInterval(timerInterval);
+      timerInterval = null;
       isRunning = false;
       playVintageBell();
       secondsLeft = 0;
@@ -178,7 +251,10 @@ function startTimer() {
 
 function pauseTimer() {
   isRunning = false;
-  clearInterval(timerInterval);
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
   timerStatus.textContent = 'EN PAUSA';
   btnTogglePlay.textContent = 'Continuar';
   btnTogglePlay.style.background = '#c2593f';
@@ -188,48 +264,78 @@ function resetTimer() {
   pauseTimer();
   secondsLeft = (timerMode === 'work' ? WORK_MINUTES : BREAK_MINUTES) * 60;
   timerStatus.textContent = 'LISTO';
-  btnTogglePlay.textContent = 'Iniciar Foco';
+  btnTogglePlay.textContent = timerMode === 'work' ? 'Iniciar Foco' : 'Iniciar Descanso';
   updateTimerDisplay();
 }
 
 function setMode(mode) {
+  // Punto 4: Detener y limpiar exhaustivamente intervalos activos para no acelerar el reloj
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  isRunning = false;
   timerMode = mode;
+  secondsLeft = (mode === 'work' ? WORK_MINUTES : BREAK_MINUTES) * 60;
+
   btnModeWork.classList.toggle('active', mode === 'work');
   btnModeBreak.classList.toggle('active', mode === 'break');
   progressCircle.style.stroke = mode === 'work' ? '#c2593f' : '#0891b2';
-  resetTimer();
+
+  timerStatus.textContent = 'LISTO';
+  btnTogglePlay.textContent = mode === 'work' ? 'Iniciar Foco' : 'Iniciar Descanso';
+  btnTogglePlay.style.background = mode === 'work' ? '#c2593f' : '#0891b2';
+  updateTimerDisplay();
 }
 
-// 4. GESTIÓN DE SESIONES, MATERIAS E INTENCIÓN EN LOCALSTORAGE
+// ==========================================================
+// 4. GESTIÓN DE SESIONES CON BLOQUE TRY...CATCH BLINDADO (PUNTO 3)
+// ==========================================================
 function getSessions() {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.SESSIONS);
     if (!raw) {
-      // Carga automática del registro de ejemplo ("Programación - 25 min") para no iniciar en blanco
       localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(DEFAULT_DEMO_SESSION));
       return DEFAULT_DEMO_SESSION;
     }
-    return JSON.parse(raw);
-  } catch (e) {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      throw new Error('Estructura de sesiones no es un array válido');
+    }
+    return parsed;
+  } catch (err) {
+    console.error('Error al recuperar sesiones de localStorage:', err);
+    showToastError('Los datos del historial estaban dañados. Se restauró el registro inicial seguro.');
+    localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(DEFAULT_DEMO_SESSION));
     return DEFAULT_DEMO_SESSION;
   }
 }
 
 function saveSession(session) {
-  const current = getSessions();
-  current.unshift(session);
-  localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(current));
-  renderWeeklyStats();
+  try {
+    const current = getSessions();
+    current.unshift(session);
+    localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(current));
+    renderWeeklyStats();
+  } catch (err) {
+    console.error('Error al guardar sesión en localStorage:', err);
+    showToastError('No se pudo guardar la sesión. Es posible que el almacenamiento esté lleno.');
+  }
 }
 
 function deleteSession(id) {
-  const current = getSessions();
-  const updated = current.filter((s) => s.id !== id);
-  localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(updated));
-  renderWeeklyStats();
+  try {
+    const current = getSessions();
+    const updated = current.filter((s) => s.id !== id);
+    localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(updated));
+    renderWeeklyStats();
+  } catch (err) {
+    console.error('Error al eliminar sesión en localStorage:', err);
+    showToastError('Hubo un error al eliminar el registro del almacenamiento.');
+  }
 }
 
-// Gestión de materias en localStorage
+// Gestión de materias con try...catch
 function getStoredSubjects() {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.SUBJECTS);
@@ -237,28 +343,43 @@ function getStoredSubjects() {
       localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(DEFAULT_SUBJECTS));
       return DEFAULT_SUBJECTS;
     }
-    return JSON.parse(raw);
-  } catch (e) {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      throw new Error('Materias corruptas');
+    }
+    return parsed;
+  } catch (err) {
+    console.error('Error al recuperar materias de localStorage:', err);
+    localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(DEFAULT_SUBJECTS));
     return DEFAULT_SUBJECTS;
   }
 }
 
 function saveStoredSubjects(subjectsList) {
-  localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(subjectsList));
+  try {
+    localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(subjectsList));
+  } catch (err) {
+    console.error('Error al guardar materias:', err);
+    showToastError('No se pudieron guardar las materias.');
+  }
 }
 
-// Gestión del Pacto Anti-Distracción en localStorage
+// Gestión del Pacto Anti-Distracción con try...catch
 function getStoredIntention() {
   try {
     const val = localStorage.getItem(STORAGE_KEYS.INTENTION);
     return val || selectIntention.options[0].value;
-  } catch (e) {
+  } catch (err) {
     return selectIntention.options[0].value;
   }
 }
 
 function saveStoredIntention(intentionText) {
-  localStorage.setItem(STORAGE_KEYS.INTENTION, intentionText);
+  try {
+    localStorage.setItem(STORAGE_KEYS.INTENTION, intentionText);
+  } catch (err) {
+    console.error('Error al guardar compromiso:', err);
+  }
 }
 
 // 5. CÁLCULO Y RENDERIZADO DE ESTADÍSTICAS SEMANALES
@@ -396,13 +517,42 @@ btnCancelModal.addEventListener('click', () => {
 
 formSaveSession.addEventListener('submit', (e) => {
   e.preventDefault();
+
+  // Punto 2: Evitar el doble clic en el botón "Guardar Sesión" deshabilitándolo por 1.5 segundos
+  const submitBtn = formSaveSession.querySelector('button[type="submit"]') || formSaveSession.querySelector('.btn-confirm');
+  if (submitBtn) {
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    submitBtn.style.opacity = '0.5';
+    submitBtn.style.cursor = 'not-allowed';
+
+    setTimeout(() => {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+      submitBtn.style.cursor = 'pointer';
+    }, 1500);
+  }
+
+  // Punto 1: Validar campo de materia (no vacío, sin espacios puros, <= 40 caracteres y sanitizado)
+  const validSubject = validateAndSanitizeSubject(modalSubject.value);
+  if (!validSubject) {
+    return; // showToastError ya informó la causa específica
+  }
+
+  const minsValue = parseInt(modalMins.value, 10);
+  if (isNaN(minsValue) || minsValue <= 0 || minsValue > 300) {
+    showToastError('Los minutos de concentración deben ser un número válido entre 1 y 300.');
+    return;
+  }
+
   const session = {
     id: String(Date.now()),
-    subject: modalSubject.value,
-    minutes: parseInt(modalMins.value, 10) || 25,
+    subject: validSubject,
+    minutes: minsValue,
     date: new Date().toISOString(),
-    notes: modalNotes.value.trim()
+    notes: sanitizeHTML(modalNotes.value.trim()),
   };
+
   saveSession(session);
   logModal.classList.add('hidden');
 });
